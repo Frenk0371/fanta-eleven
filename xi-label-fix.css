@@ -6,9 +6,14 @@
 .xi-count-5 .xi-pct{font-size:7.4px;padding:2px 2.5px}
 .xi-count-4 .xi-label .xi-name.xi-name-long{font-size:9.2px;letter-spacing:-.2px}
 .xi-count-3 .xi-label .xi-name.xi-name-long{font-size:10px;letter-spacing:-.18px}
+
+/* Main navigation: larger and more readable on phone */
+.tabs button{font-size:15.5px!important;font-weight:850!important;line-height:1.08!important;letter-spacing:-.24px!important;min-height:60px!important;padding-left:3px!important;padding-right:3px!important}
+
 @media(max-width:430px){
   .xi-count-5 .xi-label .xi-name{font-size:7.7px;max-width:calc(100% - 25px)}
   .xi-count-5 .xi-label .xi-name.xi-name-long{font-size:7.05px}
   .xi-count-5 .xi-label .xi-name.xi-name-xlong{font-size:6.65px}
   .xi-count-5 .xi-pct{font-size:7.1px;padding:2px}
+  .tabs button{font-size:14.6px!important;min-height:58px!important;letter-spacing:-.28px!important;padding-left:2px!important;padding-right:2px!important}
 }

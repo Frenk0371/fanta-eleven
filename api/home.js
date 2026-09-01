@@ -16,17 +16,8 @@ module.exports=(req,res)=>{
     );
     html=html.replace(/Aggiorna il mio XI/g,'Aggiorna la mia Rosa');
     html=html.replace('<button data-t="xi" class="on">Il mio XI</button>','<button data-t="xi" class="on">La mia Rosa</button>');
-
-    // Ordine visuale della rosa: POR -> DIF -> CEN -> ATT, poi alfabetico.
-    html=html.replace(
-      'function render(){const t=cur();',
-      "function render(){const t=cur(),roleOrder={POR:0,DIF:1,CEN:2,ATT:3},displayPlayers=[...t.players].sort((a,b)=>(roleOrder[a.role]??9)-(roleOrder[b.role]??9)||String(a.name||'').localeCompare(String(b.name||''),'it'));"
-    );
-    html=html.replace("$('#players').innerHTML=t.players.map(p=>","$('#players').innerHTML=displayPlayers.map(p=>");
-    html=html.replace("$('#roster').innerHTML=t.players.map(p=>","$('#roster').innerHTML=displayPlayers.map(p=>");
-
     html=html.replace('</style>',`.detail{display:none!important}.roster-switch{gap:10px;margin-top:22px}.roster-switch>b{font-size:16px}.roster-switch #teamSelect{min-height:60px;font-size:21px;font-weight:850;letter-spacing:-.25px;padding-left:18px}.roster-analyze{width:100%;min-height:56px;margin-top:2px;font-size:17px}.fe-splash{display:none!important}body.splashing{overflow:auto!important}body.splashing .app{opacity:1!important;transform:none!important;pointer-events:auto!important}</style>`);
-    html=html.replace('</body>','<script src="/sync-roster.js?v=1"></script><script src="/search-safe.js?v=1"></script></body>');
+    html=html.replace('</body>','<script src="/sync-roster.js?v=1"></script><script src="/search-safe.js?v=1"></script><script src="/sort-roster.js?v=1"></script></body>');
     res.setHeader('Content-Type','text/html; charset=utf-8');
     res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Pragma','no-cache');

@@ -1,4 +1,4 @@
-const ENGINE='3.2.6-calibrated-history';
+const ENGINE='3.2.7-bayesian-history';
 const {fixtures,context,historicalBaseline}=require('../lib/history-calibrated');
 const {loadSourceHtml,directSignals,newsItems,classifyNews}=require('../lib/editorial');
 const {build}=require('../lib/scoring');

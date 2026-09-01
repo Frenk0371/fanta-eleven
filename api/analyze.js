@@ -1,4 +1,4 @@
-const ENGINE='3.2.3-stable-hard-availability-history-retry';
+const ENGINE='3.2.4-stable-espn-history-cache';
 const {fixtures,context,historicalBaseline}=require('../lib/history');
 const {loadSourceHtml,directSignals,newsItems,classifyNews}=require('../lib/editorial');
 const {build}=require('../lib/scoring');

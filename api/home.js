@@ -6,6 +6,7 @@ module.exports=(req,res)=>{
   try{
     const file=path.join(process.cwd(),'index.html');
     let html=fs.readFileSync(file,'utf8');
+    html=html.replace(/Aggiorna il mio XI/g,'Aggiorna la mia Rosa');
     html=html.replace('</style>','.detail{display:none!important}</style>');
     html=html.replace('</body>','<script src="/sync-roster.js?v=1"></script><script src="/search-safe.js?v=1"></script></body>');
     res.setHeader('Content-Type','text/html; charset=utf-8');

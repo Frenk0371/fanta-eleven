@@ -1,12 +1,12 @@
 (function(){
   const MODULES=[
-    {name:'3-4-3',DIF:3,CEN:4,ATT:3},
-    {name:'3-5-2',DIF:3,CEN:5,ATT:2},
-    {name:'4-3-3',DIF:4,CEN:3,ATT:3},
-    {name:'4-4-2',DIF:4,CEN:4,ATT:2},
+    {name:'5-4-1',DIF:5,CEN:4,ATT:1},
     {name:'4-5-1',DIF:4,CEN:5,ATT:1},
     {name:'5-3-2',DIF:5,CEN:3,ATT:2},
-    {name:'5-4-1',DIF:5,CEN:4,ATT:1}
+    {name:'4-4-2',DIF:4,CEN:4,ATT:2},
+    {name:'3-5-2',DIF:3,CEN:5,ATT:2},
+    {name:'4-3-3',DIF:4,CEN:3,ATT:3},
+    {name:'3-4-3',DIF:3,CEN:4,ATT:3}
   ];
   const CATALOG_URLS=[
     'https://raw.githubusercontent.com/bqit/fantaleghe-api-json/refs/heads/main/players.json',
@@ -16,7 +16,7 @@
   const safe=s=>typeof esc==='function'?esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const pct=p=>Number.isFinite(Number(p))?Math.round(Number(p)):null;
   const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  let qualityPromise=null,renderSeq=0;
+  let qualityPromise=null,renderSeq=0,selectedModuleName=null;
 
   function imageUrl(p){
     return p.image||p.playerImage||(p.sourceId?`https://content.fantacalcio.it/web/campioncini/21/medium/${encodeURIComponent(p.sourceId)}.png?v=640`:'');
@@ -96,20 +96,46 @@
     const floor=Math.min(...eleven.map(p=>p.prob));
     return {module,por,dif,cen,att,eleven,avgScore,avgProb,avgQuality,floor};
   }
-  function bestXI(players){
-    return MODULES.map(m=>buildCandidate(players,m)).filter(Boolean)
-      .sort((a,b)=>b.avgScore-a.avgScore||b.avgProb-a.avgProb||b.floor-a.floor)[0]||null;
+  function candidates(players){
+    return MODULES.map(m=>buildCandidate(players,m)).filter(Boolean);
+  }
+  function bestXI(list){
+    return [...list].sort((a,b)=>b.avgScore-a.avgScore||b.avgProb-a.avgProb||b.floor-a.floor)[0]||null;
   }
   function playerNode(p){
     const u=imageUrl(p),status=p.analysis?.status||'';
     return `<div class="xi-player" title="${safe(p.name)} · Titolarità ${p.prob}% · Qualità ${p.qualityIndex}/100">
       <div class="xi-face">${u?`<img src="${safe(u)}" alt="${safe(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}<span>${safe((p.name||'?')[0])}</span><b>${p.prob}%</b></div>
       <div class="xi-name">${safe(lastName(p.name))}</div>
+      <div class="xi-probbar"><i style="width:${Math.max(2,Math.min(100,p.prob))}%"></i></div>
       <small>${safe(status)}</small>
     </div>`;
   }
   function row(role,players){
-    return `<div class="xi-line xi-${role.toLowerCase()}">${players.map(playerNode).join('')}</div>`;
+    return `<div class="xi-line xi-${role.toLowerCase()} xi-count-${players.length}">${players.map(playerNode).join('')}</div>`;
+  }
+  function modulePicker(valid,auto,selected){
+    const validNames=new Set(valid.map(x=>x.module.name));
+    return `<div class="xi-module-head"><div><span>Scegli il modulo</span><b>Consigliato: ${auto.module.name}</b></div><small>Puoi confrontare gli XI</small></div>
+      <div class="xi-modules">${MODULES.map(m=>{
+        const enabled=validNames.has(m.name),isSelected=m.name===selected.module.name,isAuto=m.name===auto.module.name;
+        return `<button type="button" data-xi-module="${m.name}" class="${isSelected?'selected ':''}${isAuto?'recommended ':''}" ${enabled?'':'disabled'}><span>${m.name}</span>${isAuto?'<small>consigliato</small>':''}</button>`;
+      }).join('')}</div>`;
+  }
+  function pitch(best){
+    return `<div class="xi-stadium">
+      <div class="xi-ad xi-ad-top"><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span></div>
+      <div class="xi-pitch" aria-label="XI ${best.module.name}">
+        <div class="xi-box xi-box-top"></div><div class="xi-goal xi-goal-top"></div>
+        <div class="xi-center-circle"></div><div class="xi-center-dot"></div>
+        <div class="xi-box xi-box-bottom"></div><div class="xi-goal xi-goal-bottom"></div>
+        ${row('att',best.att)}
+        ${row('cen',best.cen)}
+        ${row('dif',best.dif)}
+        ${row('por',best.por)}
+      </div>
+      <div class="xi-ad xi-ad-bottom"><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span></div>
+    </div>`;
   }
   async function renderXI(){
     const root=document.getElementById('xiRecommended');
@@ -122,25 +148,28 @@
     root.innerHTML='<div class="xi-empty"><h3>Calcolo XI consigliato…</h3><p>Confronto titolarità e valore Fantacalcio.</p></div>';
     const quality=await loadQuality();
     if(seq!==renderSeq)return;
-    const scored=scoredPlayers(quality),best=bestXI(scored);
-    if(!best){
+    const scored=scoredPlayers(quality),valid=candidates(scored),auto=bestXI(valid);
+    if(!auto){
       const counts=['POR','DIF','CEN','ATT'].map(r=>`${r} ${byRole(scored,r).length}`).join(' · ');
       root.innerHTML=`<div class="xi-empty"><h3>XI non ancora disponibile</h3><p>Servono almeno 11 giocatori analizzati e un modulo valido. Premi <b>Aggiorna la mia Rosa</b> dopo aver completato la rosa.</p><small>${safe(counts)}</small></div>`;
       return;
     }
-    const avgProb=Math.round(best.avgProb),avgQuality=Math.round(best.avgQuality);
-    root.innerHTML=`<div class="xi-summary"><div><span>Modulo consigliato</span><b>${best.module.name}</b></div><div><span>Affidabilità XI</span><b>${avgProb}%</b></div></div>
-      <div class="xi-pitch" aria-label="XI consigliato ${best.module.name}">
-        <div class="xi-center-circle"></div>
-        ${row('att',best.att)}
-        ${row('cen',best.cen)}
-        ${row('dif',best.dif)}
-        ${row('por',best.por)}
-      </div>
-      <div class="xi-footnote">Scelta basata su <b>titolarità + qualità fantacalcistica</b>. Qualità XI ${avgQuality}/100, calcolata dal valore FVM e normalizzata per ruolo${quality.available?'':' (catalogo qualità temporaneamente non disponibile: usata stima neutra)'}.</div>`;
+    let shown=selectedModuleName?valid.find(x=>x.module.name===selectedModuleName):null;
+    if(!shown){shown=auto;selectedModuleName=auto.module.name}
+    const avgProb=Math.round(shown.avgProb),avgQuality=Math.round(shown.avgQuality),manual=shown.module.name!==auto.module.name;
+    root.innerHTML=`${modulePicker(valid,auto,shown)}
+      <div class="xi-summary"><div><span>${manual?'Modulo visualizzato':'Modulo consigliato'}</span><b>${shown.module.name}</b></div><div><span>Affidabilità XI</span><b>${avgProb}%</b></div></div>
+      ${pitch(shown)}
+      <div class="xi-footnote">XI scelto con <b>titolarità + qualità fantacalcistica</b>. Qualità XI ${avgQuality}/100${manual?` · Il sistema consiglia ${auto.module.name}`:''}${quality.available?'':' · qualità temporaneamente neutra'}.</div>`;
   }
+  document.addEventListener('click',e=>{
+    const b=e.target.closest?.('[data-xi-module]');
+    if(!b||b.disabled)return;
+    selectedModuleName=b.dataset.xiModule||null;
+    renderXI();
+  });
   document.querySelectorAll('[data-t="lineup"]').forEach(b=>b.addEventListener('click',()=>setTimeout(renderXI,0)));
-  document.getElementById('teamSelect')?.addEventListener('change',()=>setTimeout(renderXI,0));
+  document.getElementById('teamSelect')?.addEventListener('change',()=>{selectedModuleName=null;setTimeout(renderXI,0)});
   document.getElementById('analyze')?.addEventListener('click',()=>setTimeout(renderXI,1200));
   const players=document.getElementById('players');
   if(players)new MutationObserver(()=>{if(!document.getElementById('lineup')?.classList.contains('hidden'))renderXI()}).observe(players,{childList:true});

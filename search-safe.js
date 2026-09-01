@@ -1,4 +1,38 @@
 (function(){
+  // Splash minimale: solo il pallone già presente nell'app.
+  const style=document.createElement('style');
+  style.textContent=`
+    .fe-kicker{display:none!important}
+    .fe-splash-ball{
+      left:calc(50% - 38px)!important;
+      top:calc(50% - 38px)!important;
+      opacity:0;
+      animation:feSoloBall 1.72s .05s cubic-bezier(.16,.7,.18,1) both!important;
+    }
+    .fe-impact{left:50%!important;top:50%!important;animation:feImpact .32s 1.54s ease-out both!important}
+    .fe-flash{animation:feFlash .22s 1.57s ease-out both!important;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.98),rgba(174,238,221,.55) 13%,rgba(150,213,255,.14) 31%,transparent 54%)!important}
+    @keyframes feSoloBall{
+      0%{opacity:0;transform:translate3d(0,0,-430px) scale(.3) rotate(0deg)}
+      9%{opacity:1}
+      34%{opacity:1;transform:translate3d(0,0,-80px) scale(.72) rotate(280deg)}
+      58%{opacity:1;transform:translate3d(0,0,270px) scale(1.7) rotate(610deg)}
+      78%{opacity:1;transform:translate3d(0,0,560px) scale(3.9) rotate(890deg)}
+      94%{opacity:1;transform:translate3d(0,0,820px) scale(7.4) rotate(1110deg)}
+      100%{opacity:0;transform:translate3d(0,0,990px) scale(11.2) rotate(1220deg)}
+    }
+    @media(max-width:430px){.fe-splash-ball{left:calc(50% - 35px)!important;top:calc(50% - 35px)!important}}
+  `;
+  document.head.appendChild(style);
+
+  // Secondo fail-safe locale: l'intro non può impedire l'accesso alla home.
+  setTimeout(()=>{
+    document.body.classList.remove('splashing');
+    const splash=document.getElementById('feSplash');
+    if(splash){splash.classList.add('out');setTimeout(()=>splash.remove(),220)}
+  },2300);
+})();
+
+(function(){
   const input=document.querySelector('#search'),box=document.querySelector('#suggestions'),note=document.querySelector('#note'),add=document.querySelector('#add'),pickedBox=document.querySelector('#picked');
   if(!input||!box||!note||!add||!pickedBox)return;
   let seq=0,controller=null,wait=null;

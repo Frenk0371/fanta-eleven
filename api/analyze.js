@@ -1,4 +1,4 @@
-const ENGINE='3.2.0-stable-espn-history';
+const ENGINE='3.2.2-stable-source-dedupe';
 const {fixtures,context,historicalBaseline}=require('../lib/history');
 const {loadSourceHtml,directSignals,newsItems,classifyNews}=require('../lib/editorial');
 const {build}=require('../lib/scoring');

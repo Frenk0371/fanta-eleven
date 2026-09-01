@@ -7,6 +7,10 @@ module.exports=(req,res)=>{
     const file=path.join(process.cwd(),'index.html');
     let html=fs.readFileSync(file,'utf8');
 
+    // Disabilita completamente la splash: su iOS deve aprirsi sempre direttamente la home.
+    html=html.replace(/<body class="splashing">[\s\S]*?<main class="app">/,'<body><main class="app">');
+    html=html.replace('<body class="splashing">','<body>');
+
     // Home: niente hero/landing, priorità alla rosa.
     html=html.replace(
       /<section class="hero"><h2>[\s\S]*?<button id="analyze" class="btn primary">[\s\S]*?<\/button><\/section>/,
@@ -25,7 +29,7 @@ module.exports=(req,res)=>{
     // Fantasquadre: azione secondaria più discreta.
     html=html.replace('<button class="btn secondary">Aggiungi squadra</button>','<button class="btn secondary">+ Nuova squadra</button>');
 
-    // Metodo: da paragrafo tecnico a percorso visuale in tre passaggi.
+    // Metodo: percorso visuale in tre passaggi.
     html=html.replace(
       /<section id="method" class="hidden panel method">[\s\S]*?<\/section>/,
       `<section id="method" class="hidden panel method"><div class="method-version">Metodo 3.2.5 Stable</div><h3>Come nasce la stima</h3><div class="method-flow"><div class="method-step"><span>1</span><div><b>Storico</b><small>Minuti, titolarità, sostituzioni e ultime gare.</small></div></div><div class="method-step"><span>2</span><div><b>Fonti</b><small>Notizie e indicazioni sulla prossima partita.</small></div></div><div class="method-step"><span>3</span><div><b>Stima</b><small>I segnali più recenti pesano di più nel risultato finale.</small></div></div></div><div class="sources"><span>Fantacalcio.it</span><span>Sky Sport</span><span>SOS Fanta</span><span>Storico + minuti</span></div></section>`
@@ -33,6 +37,9 @@ module.exports=(req,res)=>{
 
     const polishCss=`
 .detail{display:none!important}
+.fe-splash{display:none!important}
+body.splashing{overflow:auto!important}
+body.splashing .app{opacity:1!important;transform:none!important;pointer-events:auto!important}
 .roster-switch{gap:10px;margin:18px 0 12px}
 .roster-switch #teamSelect{min-height:62px;font-size:23px;font-weight:920;letter-spacing:-.4px;padding-left:18px;border-color:rgba(133,177,218,.42);background:linear-gradient(160deg,rgba(10,27,43,.98),rgba(6,19,31,.98));box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 26px rgba(0,0,0,.12)}
 .roster-analyze{width:100%;min-height:54px;margin-top:1px;font-size:16.5px;border-radius:16px}
@@ -60,11 +67,6 @@ module.exports=(req,res)=>{
 .method .sources{gap:7px}
 .method .sources span{padding:7px 10px;font-size:12.5px}
 .msg.toast-done{position:fixed;z-index:80;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));width:min(calc(100% - 26px),560px);margin:0;transform:translateX(-50%);box-shadow:0 16px 42px rgba(0,0,0,.38);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-/* Fail-safe splash: l'app deve diventare visibile anche se iOS congela l'intro. */
-@keyframes feSplashFailsafe{to{opacity:0;visibility:hidden;pointer-events:none}}
-@keyframes feAppFailsafe{to{opacity:1;transform:none;pointer-events:auto}}
-.fe-splash{animation:feSplashFailsafe .01s 2.75s forwards}
-body.splashing .app{animation:feAppFailsafe .01s 2.75s forwards}
 @media(max-width:430px){
   .roster-switch{margin-top:16px}
   .roster-switch #teamSelect{font-size:22px;min-height:60px}
@@ -77,19 +79,9 @@ body.splashing .app{animation:feAppFailsafe .01s 2.75s forwards}
     html=html.replace('</style>',polishCss+'</style>');
 
     const uiScript=`<script>(function(){
-      const forceOpen=()=>{
-        try{
-          document.body.classList.remove('splashing');
-          const splash=document.getElementById('feSplash');
-          if(splash){splash.classList.add('out');setTimeout(()=>splash.remove(),220)}
-        }catch(e){}
-      };
-      // Hard timeout indipendente dall'animazione principale.
-      setTimeout(forceOpen,2850);
-      // Se iOS ripristina la PWA da uno snapshot congelato, apri subito la home.
-      window.addEventListener('pageshow',e=>{if(e.persisted)setTimeout(forceOpen,80)});
-      document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(forceOpen,120)});
-
+      document.body.classList.remove('splashing');
+      const splash=document.getElementById('feSplash');
+      if(splash)splash.remove();
       const msg=document.getElementById('msg');
       if(msg){
         let hideTimer=null;

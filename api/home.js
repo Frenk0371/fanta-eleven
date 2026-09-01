@@ -7,7 +7,7 @@ module.exports=(req,res)=>{
     const file=path.join(process.cwd(),'index.html');
     let html=fs.readFileSync(file,'utf8');
     html=html.replace('</style>','.detail{display:none!important}</style>');
-    html=html.replace('</body>','<script src="/sync-roster.js?v=1"></script></body>');
+    html=html.replace('</body>','<script src="/sync-roster.js?v=1"></script><script src="/search-safe.js?v=1"></script></body>');
     res.setHeader('Content-Type','text/html; charset=utf-8');
     res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=300');
     if(req.method==='HEAD') return res.status(200).end();

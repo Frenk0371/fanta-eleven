@@ -60,6 +60,11 @@ module.exports=(req,res)=>{
 .method .sources{gap:7px}
 .method .sources span{padding:7px 10px;font-size:12.5px}
 .msg.toast-done{position:fixed;z-index:80;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));width:min(calc(100% - 26px),560px);margin:0;transform:translateX(-50%);box-shadow:0 16px 42px rgba(0,0,0,.38);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+/* Fail-safe splash: l'app deve diventare visibile anche se iOS congela l'intro. */
+@keyframes feSplashFailsafe{to{opacity:0;visibility:hidden;pointer-events:none}}
+@keyframes feAppFailsafe{to{opacity:1;transform:none;pointer-events:auto}}
+.fe-splash{animation:feSplashFailsafe .01s 2.75s forwards}
+body.splashing .app{animation:feAppFailsafe .01s 2.75s forwards}
 @media(max-width:430px){
   .roster-switch{margin-top:16px}
   .roster-switch #teamSelect{font-size:22px;min-height:60px}
@@ -72,6 +77,19 @@ module.exports=(req,res)=>{
     html=html.replace('</style>',polishCss+'</style>');
 
     const uiScript=`<script>(function(){
+      const forceOpen=()=>{
+        try{
+          document.body.classList.remove('splashing');
+          const splash=document.getElementById('feSplash');
+          if(splash){splash.classList.add('out');setTimeout(()=>splash.remove(),220)}
+        }catch(e){}
+      };
+      // Hard timeout indipendente dall'animazione principale.
+      setTimeout(forceOpen,2850);
+      // Se iOS ripristina la PWA da uno snapshot congelato, apri subito la home.
+      window.addEventListener('pageshow',e=>{if(e.persisted)setTimeout(forceOpen,80)});
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(forceOpen,120)});
+
       const msg=document.getElementById('msg');
       if(msg){
         let hideTimer=null;

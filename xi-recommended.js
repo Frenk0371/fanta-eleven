@@ -26,6 +26,7 @@
   const pct=p=>Number.isFinite(Number(p))?Math.round(Number(p)):null;
   const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
   let qualityPromise=null,renderSeq=0,selectedModuleName=null,sourceExpanded=false;
+  let compareAId=null,compareBId=null,countdownTimer=null;
 
   function imageUrl(p){
     return p.sourceId?`https://content.fantacalcio.it/web/campioncini/21/medium/${encodeURIComponent(p.sourceId)}.png?v=20260902a`:(p.image||p.playerImage||'');
@@ -175,6 +176,96 @@
     const when=updated?new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(updated)):'—';
     return `<section class="source-compare"><div class="source-title"><div><span>Probabili della tua rosa</span><h3>Confronto fonti</h3></div><small>Aggiornato ${safe(when)}</small></div><p class="source-note">In evidenza solo dubbi, discordanze e copertura insufficiente. <b>N/D</b> significa dato non disponibile; “non allineata” indica un contenuto non riferito alla prossima gara.</p><div class="source-list">${rows}</div>${toggle}</section>`;
   }
+  function previousAnalyses(){
+    try{return JSON.parse(localStorage.getItem('fe-analysis-previous-v1')||'{}')||{}}catch{return{}}
+  }
+  function usedFormationEvidence(p){
+    return (Array.isArray(p.analysis?.evidence)?p.analysis.evidence:[]).filter(e=>e?.used&&e?.kind==='formazione');
+  }
+  function probabilityChanges(players){
+    const previous=previousAnalyses();
+    return players.map(p=>{
+      const before=Number(previous[p.id]?.probability),after=Number(p.prob);
+      return Number.isFinite(before)&&Number.isFinite(after)?{...p,before,after,delta:after-before}:null;
+    }).filter(x=>x&&Math.abs(x.delta)>=6).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+  }
+  function firstKickoff(players){
+    const now=Date.now();
+    const dates=players.map(p=>Date.parse(p.analysis?.nextMatch?.date||'')).filter(Number.isFinite).sort((a,b)=>a-b);
+    return dates.find(x=>x>now-6*36e5)||null;
+  }
+  function countdownText(timestamp){
+    if(!timestamp)return 'Da definire';
+    const minutes=Math.floor((timestamp-Date.now())/6e4);
+    if(minutes<=0)return 'Giornata iniziata';
+    const days=Math.floor(minutes/1440),hours=Math.floor((minutes%1440)/60),mins=minutes%60;
+    if(days)return `${days}g ${hours}h`;
+    if(hours)return `${hours}h ${mins}m`;
+    return `${mins} min`;
+  }
+  function matchdayDashboard(players){
+    const changes=probabilityChanges(players);
+    const unavailable=players.filter(p=>p.prob<=8||/indisponibile/i.test(p.analysis?.status||''));
+    const doubts=players.filter(p=>p.prob>8&&p.prob<66);
+    const activeSources=new Set(players.flatMap(p=>usedFormationEvidence(p).map(e=>String(e.source||''))));
+    const kickoff=firstKickoff(players);
+    const alerts=[];
+    changes.slice(0,2).forEach(p=>alerts.push(`<li class="${p.delta<0?'danger':'positive'}"><b>${safe(p.name)}</b><span>${p.delta>0?'\u2191':'\u2193'} ${p.before}% \u2192 ${p.after}% dall'ultimo aggiornamento</span></li>`));
+    unavailable.slice(0,2).forEach(p=>alerts.push(`<li class="danger"><b>${safe(p.name)}</b><span>${safe(p.analysis?.status||'Indisponibile')} · ${p.prob}%</span></li>`));
+    doubts.filter(p=>!unavailable.some(x=>x.id===p.id)).slice(0,2).forEach(p=>alerts.push(`<li><b>${safe(p.name)}</b><span>${safe(p.analysis?.status||'Da valutare')} · ${p.prob}%</span></li>`));
+    const alertCount=new Set([...unavailable,...doubts].map(p=>p.id)).size;
+    const kickoffLabel=kickoff?new Intl.DateTimeFormat('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(kickoff)):'—';
+    return `<section class="matchday-card">
+      <div class="matchday-title"><div><span>Centro decisioni</span><h3>La tua giornata</h3></div><small>Prima gara ${safe(kickoffLabel)}</small></div>
+      <div class="matchday-stats">
+        <div><span>Consegna stimata</span><b data-xi-countdown="${kickoff||''}">${safe(countdownText(kickoff))}</b></div>
+        <div><span>Alert rosa</span><b class="${alertCount?'warn':''}">${alertCount}</b></div>
+        <div><span>Variazioni</span><b>${changes.length}</b></div>
+        <div><span>Fonti attive</span><b>${activeSources.size}/${FORMATION_SOURCES.length}</b></div>
+      </div>
+      <ul class="matchday-alerts">${alerts.length?alerts.slice(0,4).join(''):'<li class="positive"><b>Nessun allarme rilevante</b><span>Non risultano cali importanti o indisponibilità.</span></li>'}</ul>
+    </section>`;
+  }
+  function ensureComparison(players){
+    const valid=new Set(players.map(p=>String(p.id)));
+    if(!valid.has(String(compareAId))||!valid.has(String(compareBId))||compareAId===compareBId){
+      const pool=players.filter(p=>p.role!=='POR').sort((a,b)=>b.xiScore-a.xiScore);
+      let pair=null;
+      for(let i=0;i<pool.length&&!pair;i++)for(let j=i+1;j<pool.length;j++)if(pool[i].role===pool[j].role){pair=[pool[i],pool[j]];break}
+      pair=pair||pool.slice(0,2);
+      compareAId=pair[0]?.id||players[0]?.id||null;
+      compareBId=pair[1]?.id||players.find(p=>p.id!==compareAId)?.id||null;
+    }
+  }
+  function compareOption(p,selected){
+    return `<option value="${safe(p.id)}" ${p.id===selected?'selected':''}>${safe(p.name)} · ${safe(p.role)}</option>`;
+  }
+  function comparisonPanel(players){
+    ensureComparison(players);
+    const a=players.find(p=>p.id===compareAId),b=players.find(p=>p.id===compareBId);
+    if(!a||!b)return'';
+    const total=Math.max(.01,a.xiScore+b.xiScore),shareA=Math.round(a.xiScore/total*100),shareB=100-shareA;
+    const winner=a.xiScore>=b.xiScore?a:b,loser=winner===a?b:a;
+    const reason=winner.prob!==loser.prob?`${winner.prob}% di titolarità contro ${loser.prob}%`:`qualità fantacalcistica ${winner.qualityIndex}/100`;
+    const opponent=p=>p.analysis?.nextMatch?.opponent?`${p.analysis.nextMatch.homeAway==='Casa'?'vs':'@'} ${p.analysis.nextMatch.opponent}`:'Gara da definire';
+    return `<section class="decision-card">
+      <div class="section-kicker">Decisione rapida</div><h3>Chi schiero?</h3>
+      <div class="compare-selects"><label>Giocatore A<select data-compare="a">${players.map(p=>compareOption(p,compareAId)).join('')}</select></label><span>VS</span><label>Giocatore B<select data-compare="b">${players.map(p=>compareOption(p,compareBId)).join('')}</select></label></div>
+      <div class="compare-result"><div><strong>${safe(a.name)}</strong><b>${shareA}</b><span>${a.prob}% titolare · ${safe(opponent(a))}</span></div><div><strong>${safe(b.name)}</strong><b>${shareB}</b><span>${b.prob}% titolare · ${safe(opponent(b))}</span></div></div>
+      <p><b>Consiglio Fanta Eleven: ${safe(winner.name)}</b> — ${safe(reason)}. Il verdetto combina titolarità e valore fantacalcistico.</p>
+    </section>`;
+  }
+  function benchPanel(players,shown){
+    const starters=new Set(shown.eleven.map(p=>p.id));
+    const bench=players.filter(p=>!starters.has(p.id)).sort((a,b)=>b.xiScore-a.xiScore||b.prob-a.prob).slice(0,7);
+    if(!bench.length)return'';
+    return `<section class="bench-card"><div class="section-kicker">Copertura cambi</div><h3>Ordine panchina consigliato</h3><div class="bench-list">${bench.map((p,i)=>`<div><em>${i+1}</em><span><b>${safe(p.name)}</b><small>${safe(p.role)} · qualità ${p.qualityIndex}/100</small></span><strong>${p.prob}%</strong></div>`).join('')}</div><p>Priorità calcolata con probabilità di voto e qualità fantacalcistica; verifica sempre i limiti di ruolo della tua lega.</p></section>`;
+  }
+  function startCountdown(){
+    clearInterval(countdownTimer);
+    const update=()=>document.querySelectorAll('[data-xi-countdown]').forEach(el=>{const ts=Number(el.dataset.xiCountdown);el.textContent=countdownText(ts)});
+    update();countdownTimer=setInterval(update,30000);
+  }
   function pitch(best){
     return `<div class="xi-stadium">
       <div class="xi-ad xi-ad-top"><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span></div>
@@ -210,11 +301,15 @@
     let shown=selectedModuleName?valid.find(x=>x.module.name===selectedModuleName):null;
     if(!shown){shown=auto;selectedModuleName=auto.module.name}
     const avgProb=Math.round(shown.avgProb),avgQuality=Math.round(shown.avgQuality),manual=shown.module.name!==auto.module.name;
-    root.innerHTML=`${modulePicker(valid,auto,shown)}
+    root.innerHTML=`${matchdayDashboard(scored)}
+      ${comparisonPanel(scored)}
+      ${modulePicker(valid,auto,shown)}
       <div class="xi-summary"><div><span>${manual?'Modulo visualizzato':'Modulo consigliato'}</span><b>${shown.module.name}</b></div><div><span>Affidabilità XI</span><b>${avgProb}%</b></div></div>
       ${pitch(shown)}
       <div class="xi-footnote">XI scelto con <b>titolarità + qualità fantacalcistica</b>. Qualità XI ${avgQuality}/100${manual?` · Il sistema consiglia ${auto.module.name}`:''}${quality.available?'':' · qualità temporaneamente neutra'}.</div>
+      ${benchPanel(scored,shown)}
       ${sourceComparison(scored)}`;
+    startCountdown();
   }
   document.addEventListener('click',e=>{
     const toggle=e.target.closest?.('[data-source-toggle]');
@@ -222,6 +317,16 @@
     const b=e.target.closest?.('[data-xi-module]');
     if(!b||b.disabled)return;
     selectedModuleName=b.dataset.xiModule||null;
+    renderXI();
+  });
+  document.addEventListener('change',e=>{
+    const select=e.target.closest?.('[data-compare]');
+    if(!select)return;
+    if(select.dataset.compare==='a')compareAId=select.value;else compareBId=select.value;
+    if(compareAId===compareBId){
+      const alternative=currentPlayers().find(p=>p.id!==select.value);
+      if(select.dataset.compare==='a')compareBId=alternative?.id||compareBId;else compareAId=alternative?.id||compareAId;
+    }
     renderXI();
   });
   document.querySelectorAll('[data-t="lineup"]').forEach(b=>b.addEventListener('click',()=>setTimeout(renderXI,0)));

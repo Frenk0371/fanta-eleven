@@ -1,6 +1,15 @@
 (function(){
   const PARTICLES=new Set(['de','del','della','dello','dei','degli','di','da','dal','dalla','van','von','der','den','la','le']);
 
+  function loadInsights(){
+    if(!document.querySelector('link[data-fe-insights]')){
+      const link=document.createElement('link');link.rel='stylesheet';link.href='/xi-insights.css?v=1';link.dataset.feInsights='1';document.head.appendChild(link);
+    }
+    if(!document.querySelector('script[data-fe-insights]')){
+      const script=document.createElement('script');script.src='/xi-insights.js?v=1';script.defer=true;script.dataset.feInsights='1';document.body.appendChild(script);
+    }
+  }
+
   function displaySurname(fullName){
     const parts=String(fullName||'').trim().split(/\s+/).filter(Boolean);
     if(parts.length<=1)return parts[0]||'?';
@@ -60,12 +69,15 @@
         <b>Come leggere la stima</b>
         <div><span><strong>≥84%</strong>Titolare</span><span><strong>66–83%</strong>Favorito</span><span><strong>42–65%</strong>Ballottaggio</span><span><strong>&lt;42%</strong>Panchina</span></div>
       </div>
+      <div class="method-choice"><b>Probabilità voto stimata</b><p>È distinta dalla titolarità: stima la possibilità che il giocatore prenda voto anche entrando dalla panchina. Usa titolarità, ruolo e comportamento nelle gare recenti; per i portieri il contributo da subentrante resta quasi nullo.</p></div>
+      <div class="method-choice"><b>Trend e Ultim’ora</b><p>Ogni nuovo aggiornamento viene confrontato con quello precedente. Il Controllo finale evidenzia variazioni rilevanti, indisponibilità e giocatori con rischio voto prima della consegna.</p></div>
       <div class="method-choice"><b>Indice scelta</b><p>Nel confronto “Chi schiero?” il risultato 56%–44% è un <strong>indice relativo di preferenza</strong> tra quei due giocatori. Non sostituisce le rispettive probabilità di titolarità, che restano mostrate separatamente.</p></div>
       <div class="method-sources"><span>Fantacalcio.it</span><span>Sky Sport</span><span>SOS Fanta</span><span>Sport Mediaset</span><span>DAZN</span><span>Goal</span><span>Gazzetta</span><span>Storico + minuti</span></div>
     </div>`;
   }
 
   renderMethod4();
+  loadInsights();
   const root=document.getElementById('xiRecommended');
   if(root)new MutationObserver(()=>requestAnimationFrame(apply)).observe(root,{childList:true,subtree:true});
   document.addEventListener('click',e=>{

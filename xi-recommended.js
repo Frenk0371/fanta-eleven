@@ -13,6 +13,15 @@
     'https://cdn.jsdelivr.net/gh/bqit/fantaleghe-api-json@main/players.json'
   ];
   const ROLE_MAP={P:'POR',D:'DIF',C:'CEN',A:'ATT'};
+  const FORMATION_SOURCES=[
+    {label:'Fantacalcio',short:'FC',aliases:['fantacalcio.it','fantacalcio']},
+    {label:'Sky Sport',short:'SKY',aliases:['sport.sky.it','sky sport']},
+    {label:'SOS Fanta',short:'SOS',aliases:['sosfanta.com','sos fanta']},
+    {label:'Sport Mediaset',short:'SM',aliases:['sportmediaset.mediaset.it','sport mediaset']},
+    {label:'DAZN',short:'DAZN',aliases:['dazn.com','dazn']},
+    {label:'Goal',short:'GOAL',aliases:['goal.com','goal']},
+    {label:'Gazzetta',short:'GAZ',aliases:['gazzetta.it','gazzetta']}
+  ];
   const safe=s=>typeof esc==='function'?esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const pct=p=>Number.isFinite(Number(p))?Math.round(Number(p)):null;
   const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -122,6 +131,42 @@
         return `<button type="button" data-xi-module="${m.name}" class="${isSelected?'selected ':''}${isAuto?'recommended ':''}" ${enabled?'':'disabled'}><span>${m.name}</span>${isAuto?'<small>consigliato</small>':''}</button>`;
       }).join('')}</div>`;
   }
+  function sourceEvidence(analysis,source){
+    const evidence=Array.isArray(analysis?.evidence)?analysis.evidence:[];
+    return evidence.filter(e=>{
+      if(e?.kind==='history')return false;
+      const hay=norm(`${e?.source||''} ${e?.url||''}`);
+      return source.aliases.some(a=>hay.includes(norm(a)));
+    }).sort((a,b)=>(b.used?1:0)-(a.used?1:0)||(b.matchAligned?1:0)-(a.matchAligned?1:0)||Number(b.weight||0)-Number(a.weight||0))[0]||null;
+  }
+  function sourceVerdict(e){
+    if(!e)return{label:'N/D',cls:'na'};
+    if(!e.used)return{label:'Non allineata',cls:'stale'};
+    const p=Number(e.probability);
+    if(!Number.isFinite(p))return{label:'Segnalata',cls:'stale'};
+    if(p>=72)return{label:'Titolare',cls:'yes'};
+    if(p>=42)return{label:'Ballottaggio',cls:'maybe'};
+    if(p<=8)return{label:'Out',cls:'no'};
+    return{label:'Panchina',cls:'no'};
+  }
+  function sourceChip(source,e){
+    const verdict=sourceVerdict(e),title=e?`${source.label}: ${verdict.label}${e.reason?` · ${e.reason}`:''}`:`${source.label}: dato non disponibile o non riferito alla prossima gara`;
+    const body=`<b>${source.short}</b><span>${verdict.label}</span>`;
+    return e?.url?`<a class="source-chip ${verdict.cls}" href="${safe(e.url)}" target="_blank" rel="noopener" title="${safe(title)}">${body}</a>`:`<div class="source-chip ${verdict.cls}" title="${safe(title)}">${body}</div>`;
+  }
+  function sourceComparison(players){
+    const rows=[...players].sort((a,b)=>String(a.role||'').localeCompare(String(b.role||''))||Number(b.prob||0)-Number(a.prob||0)).map(p=>{
+      const evidence=FORMATION_SOURCES.map(s=>sourceEvidence(p.analysis,s));
+      const used=evidence.filter(e=>e?.used).length;
+      return `<article class="source-player">
+        <div class="source-player-head"><div><b>${safe(p.name)}</b><span>${safe(p.role)} · ${safe(p.club)}</span></div><div><strong>${p.prob}%</strong><small>${used}/${FORMATION_SOURCES.length} fonti</small></div></div>
+        <div class="source-grid">${FORMATION_SOURCES.map((s,i)=>sourceChip(s,evidence[i])).join('')}</div>
+      </article>`;
+    }).join('');
+    const updated=players.map(p=>Date.parse(p.analysis?.updatedAt||'')).filter(Number.isFinite).sort((a,b)=>b-a)[0];
+    const when=updated?new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(updated)):'—';
+    return `<section class="source-compare"><div class="source-title"><div><span>Probabili della tua rosa</span><h3>Confronto fonti</h3></div><small>Aggiornato ${safe(when)}</small></div><p class="source-note">Ogni fonte è valutata sulla prossima partita. <b>N/D</b> significa che non ha pubblicato un dato utilizzabile; “non allineata” indica un contenuto vecchio o non riferito alla gara.</p><div class="source-list">${rows}</div></section>`;
+  }
   function pitch(best){
     return `<div class="xi-stadium">
       <div class="xi-ad xi-ad-top"><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span><span>FANTA ELEVEN</span></div>
@@ -160,7 +205,8 @@
     root.innerHTML=`${modulePicker(valid,auto,shown)}
       <div class="xi-summary"><div><span>${manual?'Modulo visualizzato':'Modulo consigliato'}</span><b>${shown.module.name}</b></div><div><span>Affidabilità XI</span><b>${avgProb}%</b></div></div>
       ${pitch(shown)}
-      <div class="xi-footnote">XI scelto con <b>titolarità + qualità fantacalcistica</b>. Qualità XI ${avgQuality}/100${manual?` · Il sistema consiglia ${auto.module.name}`:''}${quality.available?'':' · qualità temporaneamente neutra'}.</div>`;
+      <div class="xi-footnote">XI scelto con <b>titolarità + qualità fantacalcistica</b>. Qualità XI ${avgQuality}/100${manual?` · Il sistema consiglia ${auto.module.name}`:''}${quality.available?'':' · qualità temporaneamente neutra'}.</div>
+      ${sourceComparison(scored)}`;
   }
   document.addEventListener('click',e=>{
     const b=e.target.closest?.('[data-xi-module]');

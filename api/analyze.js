@@ -1,4 +1,4 @@
-const ENGINE='3.3.0-multisource-formations';
+const ENGINE='4.0.0-decision-engine';
 const {fixtures,context,historicalBaseline}=require('../lib/history-calibrated');
 const {loadSourceHtml,directSignals,newsItems,classifyNews}=require('../lib/editorial');
 const {build}=require('../lib/scoring');

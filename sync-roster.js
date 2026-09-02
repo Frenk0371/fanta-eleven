@@ -65,6 +65,7 @@ window.feSyncRoster=syncRoster;
 const button=document.querySelector('#analyze'),original=button&&button.onclick;
 if(button&&original){button.onclick=async function(e){
   if((cur()?.players||[]).length){button.disabled=true;button.textContent='Sincronizzazione rosa…';if(typeof msg==='function')msg('Controllo trasferimenti e listone aggiornato…');try{await syncRoster({force:true,notify:true})}catch{}finally{button.disabled=false}}
+  try{if(typeof analyses!=='undefined'&&Object.keys(analyses||{}).length)localStorage.setItem('fe-analysis-previous-v1',JSON.stringify(analyses))}catch{}
   return original.call(this,e);
 }}
 setTimeout(()=>syncRoster({force:true}).catch(()=>{}),100);

@@ -25,7 +25,7 @@
   const safe=s=>typeof esc==='function'?esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const pct=p=>Number.isFinite(Number(p))?Math.round(Number(p)):null;
   const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  let qualityPromise=null,renderSeq=0,selectedModuleName=null;
+  let qualityPromise=null,renderSeq=0,selectedModuleName=null,sourceExpanded=false;
 
   function imageUrl(p){
     return p.sourceId?`https://content.fantacalcio.it/web/campioncini/21/medium/${encodeURIComponent(p.sourceId)}.png?v=20260902a`:(p.image||p.playerImage||'');
@@ -154,18 +154,26 @@
     const body=`<b>${source.short}</b><span>${verdict.label}</span>`;
     return e?.url?`<a class="source-chip ${verdict.cls}" href="${safe(e.url)}" target="_blank" rel="noopener" title="${safe(title)}">${body}</a>`:`<div class="source-chip ${verdict.cls}" title="${safe(title)}">${body}</div>`;
   }
+  function sourceNeedsAttention(player,evidence){
+    const used=evidence.filter(e=>e?.used&&Number.isFinite(Number(e.probability)));
+    const verdicts=new Set(used.map(e=>sourceVerdict(e).cls));
+    return Number(player.prob||0)<72||used.length<2||verdicts.size>1||used.some(e=>Number(e.probability)<72);
+  }
   function sourceComparison(players){
-    const rows=[...players].sort((a,b)=>String(a.role||'').localeCompare(String(b.role||''))||Number(b.prob||0)-Number(a.prob||0)).map(p=>{
+    const prepared=[...players].sort((a,b)=>String(a.role||'').localeCompare(String(b.role||''))||Number(b.prob||0)-Number(a.prob||0)).map(p=>{
       const evidence=FORMATION_SOURCES.map(s=>sourceEvidence(p.analysis,s));
       const used=evidence.filter(e=>e?.used).length;
-      return `<article class="source-player">
+      return {attention:sourceNeedsAttention(p,evidence),html:`<article class="source-player">
         <div class="source-player-head"><div><b>${safe(p.name)}</b><span>${safe(p.role)} · ${safe(p.club)}</span></div><div><strong>${p.prob}%</strong><small>${used}/${FORMATION_SOURCES.length} fonti</small></div></div>
         <div class="source-grid">${FORMATION_SOURCES.map((s,i)=>sourceChip(s,evidence[i])).join('')}</div>
-      </article>`;
-    }).join('');
+      </article>`};
+    });
+    const attention=prepared.filter(x=>x.attention),regular=prepared.filter(x=>!x.attention);
+    const rows=`${attention.length?attention.map(x=>x.html).join(''):'<div class="source-clear"><b>Nessun dubbio rilevante</b><span>Le fonti disponibili concordano sui giocatori analizzati.</span></div>'}<div class="source-all${sourceExpanded?' open':''}">${regular.map(x=>x.html).join('')}</div>`;
+    const toggle=regular.length?`<button type="button" class="source-toggle" data-source-toggle aria-expanded="${sourceExpanded}">${sourceExpanded?'Mostra solo i dubbi':`Mostra tutta la rosa (${prepared.length})`}</button>`:'';
     const updated=players.map(p=>Date.parse(p.analysis?.updatedAt||'')).filter(Number.isFinite).sort((a,b)=>b-a)[0];
     const when=updated?new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(updated)):'—';
-    return `<section class="source-compare"><div class="source-title"><div><span>Probabili della tua rosa</span><h3>Confronto fonti</h3></div><small>Aggiornato ${safe(when)}</small></div><p class="source-note">Ogni fonte è valutata sulla prossima partita. <b>N/D</b> significa che non ha pubblicato un dato utilizzabile; “non allineata” indica un contenuto vecchio o non riferito alla gara.</p><div class="source-list">${rows}</div></section>`;
+    return `<section class="source-compare"><div class="source-title"><div><span>Probabili della tua rosa</span><h3>Confronto fonti</h3></div><small>Aggiornato ${safe(when)}</small></div><p class="source-note">In evidenza solo dubbi, discordanze e copertura insufficiente. <b>N/D</b> significa dato non disponibile; “non allineata” indica un contenuto non riferito alla prossima gara.</p><div class="source-list">${rows}</div>${toggle}</section>`;
   }
   function pitch(best){
     return `<div class="xi-stadium">
@@ -209,6 +217,8 @@
       ${sourceComparison(scored)}`;
   }
   document.addEventListener('click',e=>{
+    const toggle=e.target.closest?.('[data-source-toggle]');
+    if(toggle){sourceExpanded=!sourceExpanded;document.querySelector('.source-all')?.classList.toggle('open',sourceExpanded);toggle.textContent=sourceExpanded?'Mostra solo i dubbi':`Mostra tutta la rosa (${document.querySelectorAll('.source-player').length})`;toggle.setAttribute('aria-expanded',String(sourceExpanded));return}
     const b=e.target.closest?.('[data-xi-module]');
     if(!b||b.disabled)return;
     selectedModuleName=b.dataset.xiModule||null;

@@ -1,0 +1,6 @@
+.source-all{display:none;gap:10px}
+.source-all.open{display:grid}
+.source-clear{border:1px solid rgba(109,240,179,.3);border-radius:18px;padding:16px;background:rgba(14,54,43,.65);color:#c9f8df}
+.source-clear b,.source-clear span{display:block}
+.source-clear span{margin-top:5px;color:var(--muted);font-size:12px;line-height:1.4}
+.source-toggle{display:block;width:100%;min-height:48px;margin-top:11px;border:1px solid rgba(109,240,179,.35);border-radius:14px;background:#102b29;color:#baf5d4;font:inherit;font-size:13px;font-weight:850}

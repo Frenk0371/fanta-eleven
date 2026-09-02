@@ -1,0 +1,4 @@
+const {fixtures}=require('../lib/history-calibrated');
+const {loadSourceHtml}=require('../lib/editorial');
+const {parseProbableLineups}=require('../lib/probable-lineups');
+module.exports=async(req,res)=>{if(req.method!=='GET')return res.status(405).json({error:'Metodo non consentito'});try{const[events,sourceHtml]=await Promise.all([fixtures(),loadSourceHtml()]),data=parseProbableLineups(sourceHtml[0]||'',sourceHtml,events);if(!data.matches.length)return res.status(503).json({error:'Le probabili formazioni non sono ancora disponibili'});res.setHeader('Cache-Control','public, s-maxage=900, stale-while-revalidate=1800');return res.status(200).json({...data,generatedAt:new Date().toISOString(),engine:'Fanta Eleven consensus 1.0'})}catch{return res.status(503).json({error:'Probabili formazioni temporaneamente non disponibili'})}};

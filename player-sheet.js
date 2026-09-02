@@ -35,10 +35,12 @@
   function findPlayer(trigger){
     const id=trigger.dataset.playerId;if(id){const p=currentPlayers().find(x=>String(x.id)===String(id));if(p)return p}
     const name=trigger.dataset.playerName||trigger.getAttribute('title')?.split('·')[0]||trigger.querySelector('.name,.xi-name')?.textContent||'';
-    return currentPlayers().find(p=>norm(p.name)===norm(name)||norm(p.name).endsWith(' '+norm(name)))||null;
+    const local=currentPlayers().find(p=>norm(p.name)===norm(name)||norm(p.name).endsWith(' '+norm(name)));if(local)return local;
+    const sourceId=trigger.dataset.playerSourceId;if(!sourceId)return null;
+    return{id:'global-'+sourceId,sourceId,name:trigger.dataset.playerName||name,club:trigger.dataset.playerClub||'',role:trigger.dataset.playerRole||'',image:trigger.dataset.playerImage||'',profileUrl:trigger.dataset.playerProfileUrl||''};
   }
-  document.addEventListener('click',e=>{if(e.target.closest('a,button,.del'))return;const trigger=e.target.closest('[data-player-id],.xi-player');if(!trigger)return;const p=findPlayer(trigger);if(p)open(p)});
-  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-player-id],.xi-player')){e.preventDefault();const p=findPlayer(e.target);if(p)open(p)}});
+  document.addEventListener('click',e=>{if(e.target.closest('a,button,.del'))return;const trigger=e.target.closest('[data-player-id],[data-player-source-id],.xi-player');if(!trigger)return;const p=findPlayer(trigger);if(p)open(p)});
+  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-player-id],[data-player-source-id],.xi-player')){e.preventDefault();const p=findPlayer(e.target);if(p)open(p)}});
   const mark=()=>{document.querySelectorAll('#players>.card').forEach((node,i)=>{const p=currentPlayers()[i];if(!p)return;node.dataset.playerId=p.id;node.classList.add('fe-player-trigger');node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',`Apri scheda di ${p.name}`)});document.querySelectorAll('.xi-player').forEach(node=>{node.classList.add('fe-player-trigger');node.tabIndex=0;node.setAttribute('role','button')})};
   new MutationObserver(mark).observe(document.body,{childList:true,subtree:true});mark();
   window.feOpenPlayerSheet=open;

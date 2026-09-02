@@ -1,20 +1,3 @@
-.fe-player-sheet {
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: 680px;
-  margin: 0 auto;
-  overflow-x: hidden;
-  overflow-y: auto;
-  transform: translateY(105%);
-}
-
-.fe-player-sheet.open {
-  transform: translateY(0);
-}
-
-@media (max-width: 680px) {
-  .fe-player-sheet {
-    max-width: 100%;
-  }
-}
+.fe-player-sheet{left:0;right:0;width:100%;max-width:680px;margin:0 auto;overflow-x:hidden;overflow-y:auto;transform:translateY(105%)}
+.fe-player-sheet.open{transform:translateY(0)}
+@media(max-width:680px){.fe-player-sheet{max-width:100%}}

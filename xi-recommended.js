@@ -19,7 +19,7 @@
   let qualityPromise=null,renderSeq=0,selectedModuleName=null;
 
   function imageUrl(p){
-    return p.sourceId?`https://content.fantacalcio.it/web/campioncini/21/medium/${encodeURIComponent(p.sourceId)}.png?v=640`:(p.image||p.playerImage||'');
+    return p.sourceId?`https://content.fantacalcio.it/web/campioncini/21/medium/${encodeURIComponent(p.sourceId)}.png?v=20260902a`:(p.image||p.playerImage||'');
   }
   function lastName(name){
     const parts=String(name||'').trim().split(/\s+/).filter(Boolean);

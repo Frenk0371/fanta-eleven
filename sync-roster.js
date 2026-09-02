@@ -11,7 +11,7 @@ const KNOWN_FIXES={
   }
 };
 const keyOf=p=>`${String(p?.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}|${String(p?.club||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}`;
-const officialImageUrl=id=>/^\d+$/.test(String(id||''))?'https://content.fantacalcio.it/web/campioncini/21/medium/'+encodeURIComponent(String(id))+'.png?v=640':'';
+const officialImageUrl=id=>/^\d+$/.test(String(id||''))?'https://content.fantacalcio.it/web/campioncini/21/medium/'+encodeURIComponent(String(id))+'.png?v=20260902a':'';
 function applyKnownFixes(){
   let updated=0;
   if(typeof teams==='undefined'||!Array.isArray(teams))return updated;

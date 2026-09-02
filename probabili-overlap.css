@@ -6,4 +6,9 @@ body:has(#probabili:not(.hidden)) .tabs{position:relative!important;top:auto!imp
 .prob-lines-5 .prob-count-4 .prob-face{width:58px;height:68px}
 .prob-lines-5 .prob-count-5 .prob-face{width:51px;height:61px}
 .prob-lines-5 .prob-probbar{margin-top:3px}
+.prob-lines-5 .prob-label{gap:2px}
+.prob-lines-5 .prob-name{max-width:calc(100% - 25px);font-size:9px}
+.prob-lines-5 .prob-pct{padding:2px;font-size:7.5px}
+.prob-lines-5 .prob-count-4 .prob-name{font-size:8.7px}
+.prob-lines-5 .prob-count-5 .prob-name{font-size:8px}
 @media(max-width:430px){.prob-lines-5 .prob-count-1 .prob-face{width:70px;height:80px}.prob-lines-5 .prob-count-2 .prob-face{width:66px;height:76px}.prob-lines-5 .prob-count-3 .prob-face{width:62px;height:72px}.prob-lines-5 .prob-count-4 .prob-face{width:55px;height:64px}.prob-lines-5 .prob-count-5 .prob-face{width:48px;height:58px}}

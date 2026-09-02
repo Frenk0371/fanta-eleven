@@ -114,7 +114,7 @@
   }
   function playerNode(p){
     const u=imageUrl(p),status=p.analysis?.status||'';
-    return `<div class="xi-player" title="${safe(p.name)} · Titolarità ${p.prob}% · Qualità ${p.qualityIndex}/100">
+    return `<div class="xi-player" data-player-id="${safe(p.id)}" data-player-name="${safe(p.name)}" title="${safe(p.name)} · Titolarità ${p.prob}% · Qualità ${p.qualityIndex}/100">
       <div class="xi-face">${u?`<img src="${safe(u)}" alt="${safe(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}<span>${safe((p.name||'?')[0])}</span></div>
       <div class="xi-label"><span class="xi-name">${safe(lastName(p.name))}</span><b class="xi-pct">${p.prob}%</b></div>
       <div class="xi-probbar"><i style="width:${Math.max(2,Math.min(100,p.prob))}%"></i></div>

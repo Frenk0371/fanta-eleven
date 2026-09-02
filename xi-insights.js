@@ -1,4 +1,5 @@
 (function(){
+  const ENGINE_VERSION='4.1';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=v=>Number.isFinite(Number(v))?Number(v):null;
   const safe=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -32,9 +33,14 @@
   }
 
   function trendFor(player,analysis){
-    const current=num(analysis?.probability),previous=num(previousAnalyses()[player.id]?.probability);
-    if(current===null||previous===null)return null;
-    return Math.round(current-previous);
+    const previous=previousAnalyses()[player.id];
+    if(!previous||analysis?.engineVersion!==ENGINE_VERSION||previous?.engineVersion!==ENGINE_VERSION)return null;
+    const current=num(analysis?.probability),before=num(previous?.probability);
+    if(current===null||before===null)return null;
+    const currentMatch=analysis?.nextMatch?.date||analysis?.nextMatch?.opponent||'';
+    const previousMatch=previous?.nextMatch?.date||previous?.nextMatch?.opponent||'';
+    if(currentMatch&&previousMatch&&String(currentMatch)!==String(previousMatch))return null;
+    return Math.round(current-before);
   }
 
   function trendMarkup(delta){
@@ -108,6 +114,17 @@
     </section>`;
   }
 
+  function dedupeMatchdayAlerts(){
+    const list=document.querySelector('#xiRecommended .matchday-alerts');
+    if(!list)return;
+    const seen=new Set();
+    [...list.querySelectorAll(':scope > li')].forEach(li=>{
+      const name=String(li.querySelector('b')?.textContent||'').trim().toLowerCase();
+      if(!name)return;
+      if(seen.has(name))li.remove();else seen.add(name);
+    });
+  }
+
   function decorateLineup(){
     const root=document.getElementById('xiRecommended');
     if(!root||!root.querySelector('.matchday-card'))return;
@@ -121,6 +138,7 @@
       const holder=document.createElement('div');holder.innerHTML=html;const fresh=holder.firstElementChild;
       if(panel.innerHTML!==fresh.innerHTML)panel.replaceWith(fresh);
     }
+    dedupeMatchdayAlerts();
     decorateComparison();
   }
 

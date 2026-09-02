@@ -105,7 +105,7 @@
     changes.slice(0,3).forEach(x=>events.push(`<li class="${x.delta<0?'danger':'positive'}"><b>${safe(x.p.name)}</b><span>${x.delta>0?'↑':'↓'} ${Math.abs(x.delta)} punti · ${Math.round(x.prob-x.delta)}% → ${x.prob}%</span></li>`));
     unavailable.filter(x=>!changes.includes(x)).slice(0,2).forEach(x=>events.push(`<li class="danger"><b>${safe(x.p.name)}</b><span>${safe(x.a?.status||'Indisponibile')} · titolarità ${x.prob}%</span></li>`));
     const body=events.length?events.join(''):`<li class="positive"><b>Nessuna variazione rilevante</b><span>${rows.some(x=>x.delta!==null)?'Le stime sono stabili rispetto all’ultimo controllo.':'Il trend sarà disponibile dal prossimo aggiornamento della rosa.'}</span></li>`;
-    const riskDetails=riskVote.length?`<p class="fe-live-lead"><b style="color:#dff9ec">Giocatori a rischio voto</b> · sotto il 70% di probabilità stimata di prendere voto.</p><ul class="fe-live-events">${riskVote.map(x=>`<li><b>${safe(x.p.name)}</b><span>Voto stimato ${x.vote}% · titolarità ${x.prob}%</span></li>`).join('')}</ul>`:'';
+    const riskDetails=riskVote.length?`<p class="fe-live-lead"><b style="color:#dff9ec">Giocatori a rischio voto</b> · sotto il 70% di probabilità stimata di prendere voto.</p><ul class="fe-live-events fe-risk-vote-list">${riskVote.map(x=>`<li class="risk"><b>${safe(x.p.name)}</b><span>Voto stimato ${x.vote}% · titolarità ${x.prob}%</span></li>`).join('')}</ul>`:'';
     return `<section class="fe-live-card">
       <div class="fe-live-head"><div><span>Ultim’ora</span><h3>Controllo finale</h3></div><small>Aggiornato ${whenText(latestUpdate(players))}</small></div>
       <p class="fe-live-lead">Ti mostra solo ciò che può cambiare davvero la formazione prima della consegna.</p>

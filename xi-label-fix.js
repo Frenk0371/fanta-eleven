@@ -3,10 +3,10 @@
 
   function loadInsights(){
     if(!document.querySelector('link[data-fe-insights]')){
-      const link=document.createElement('link');link.rel='stylesheet';link.href='/xi-insights.css?v=1';link.dataset.feInsights='1';document.head.appendChild(link);
+      const link=document.createElement('link');link.rel='stylesheet';link.href='/xi-insights.css?v=2';link.dataset.feInsights='1';document.head.appendChild(link);
     }
     if(!document.querySelector('script[data-fe-insights]')){
-      const script=document.createElement('script');script.src='/xi-insights.js?v=1';script.defer=true;script.dataset.feInsights='1';document.body.appendChild(script);
+      const script=document.createElement('script');script.src='/xi-insights.js?v=2';script.defer=true;script.dataset.feInsights='1';document.body.appendChild(script);
     }
   }
 

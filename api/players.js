@@ -11,12 +11,12 @@ module.exports=async(req,res)=>{
       const ids=[...new Set(idsRaw.split(',').map(x=>x.trim()).filter(Boolean))].slice(0,120);
       const players=await syncPlayers(ids);
       res.setHeader('Cache-Control','public, s-maxage=300, stale-while-revalidate=900');
-      return res.status(200).json({players,source:'fantacalcio+listone-sync',count:players.length});
+      return res.status(200).json({players,source:'fantacalcio-active-list-sync',count:players.length});
     }
     if(q.length<2)return res.status(200).json({players:[]});
     const players=await searchPlayers(q);
     res.setHeader('Cache-Control','public, s-maxage=300, stale-while-revalidate=900');
-    return res.status(200).json({players,source:'fantacalcio+listone',count:players.length});
+    return res.status(200).json({players,source:'fantacalcio-active-list',count:players.length});
   }catch(e){
     return res.status(503).json({error:'Catalogo temporaneamente non disponibile'});
   }

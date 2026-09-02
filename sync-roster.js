@@ -11,14 +11,17 @@ const KNOWN_FIXES={
   }
 };
 const keyOf=p=>`${String(p?.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}|${String(p?.club||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}`;
+const officialImageUrl=id=>/^\d+$/.test(String(id||''))?'https://content.fantacalcio.it/web/campioncini/21/medium/'+encodeURIComponent(String(id))+'.png?v=640':'';
 function applyKnownFixes(){
   let updated=0;
   if(typeof teams==='undefined'||!Array.isArray(teams))return updated;
   teams.forEach(t=>(t.players||[]).forEach(p=>{
-    const fix=KNOWN_FIXES[keyOf(p)];if(!fix)return;
+    const fix=KNOWN_FIXES[keyOf(p)]||null;
+    const canonicalSourceId=String(fix?.sourceId||p.sourceId||'');if(!canonicalSourceId)return;
     let changed=false;
     if(fix.sourceId&&String(p.sourceId||'')!==fix.sourceId){p.sourceId=fix.sourceId;changed=true;if(typeof analyses!=='undefined')delete analyses[p.id]}
-    if(fix.image&&p.image!==fix.image){p.image=fix.image;changed=true}
+    const canonicalImage=officialImageUrl(p.sourceId)||fix?.image||'';
+    if(canonicalImage&&p.image!==canonicalImage){p.image=canonicalImage;changed=true}
     if(changed)updated++;
   }));
   return updated;
@@ -45,7 +48,7 @@ async function syncRoster({force=false,notify=false}={}){
         let changed=false,invalidate=false;
         if(n.club&&n.club!==p.club){transfers.push({name:p.name,from:p.club,to:n.club});p.club=n.club;changed=true;invalidate=true}
         if(n.role&&n.role!==p.role){p.role=n.role;changed=true;invalidate=true}
-        const nextImage=fix?.image||n.image;
+        const nextImage=officialImageUrl(p.sourceId)||fix?.image||n.image;
         if(nextImage&&nextImage!==p.image){p.image=nextImage;changed=true}
         if(n.name&&n.name.includes(' ')&&String(p.name||'').split(/\s+/).length<2){p.name=n.name;changed=true}
         if(changed){updated++;if(invalidate&&typeof analyses!=='undefined')delete analyses[p.id]}

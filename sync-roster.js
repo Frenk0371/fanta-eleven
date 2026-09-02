@@ -3,7 +3,7 @@ let syncInFlight=null,lastSync=0;
 const KNOWN_FIXES={
   'mastantuono|fiorentina':{
     sourceId:'7078',
-    image:'https://content.fantacalcio.it/web/campioncini/21/card/7078.png?v=786'
+    image:'https://content.fantacalcio.it/web/campioncini/21/medium/7078.png?v=20260902'
   }
 };
 const keyOf=p=>`${String(p?.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}|${String(p?.club||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}`;

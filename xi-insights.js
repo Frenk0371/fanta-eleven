@@ -100,16 +100,18 @@
     const rows=players.map(p=>{const a=analysisFor(p),prob=num(a?.probability);if(prob===null)return null;return{p,a,prob,vote:voteProbability(p,a),delta:trendFor(p,a)}}).filter(Boolean);
     const changes=rows.filter(x=>x.delta!==null&&Math.abs(x.delta)>=3).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
     const unavailable=rows.filter(x=>x.prob<=8||/indisponibile/i.test(x.a?.status||''));
-    const riskVote=rows.filter(x=>x.vote!==null&&x.vote<70&&!unavailable.includes(x));
+    const riskVote=rows.filter(x=>x.vote!==null&&x.vote<70&&!unavailable.includes(x)).sort((a,b)=>a.vote-b.vote||a.prob-b.prob);
     const events=[];
     changes.slice(0,3).forEach(x=>events.push(`<li class="${x.delta<0?'danger':'positive'}"><b>${safe(x.p.name)}</b><span>${x.delta>0?'↑':'↓'} ${Math.abs(x.delta)} punti · ${Math.round(x.prob-x.delta)}% → ${x.prob}%</span></li>`));
     unavailable.filter(x=>!changes.includes(x)).slice(0,2).forEach(x=>events.push(`<li class="danger"><b>${safe(x.p.name)}</b><span>${safe(x.a?.status||'Indisponibile')} · titolarità ${x.prob}%</span></li>`));
     const body=events.length?events.join(''):`<li class="positive"><b>Nessuna variazione rilevante</b><span>${rows.some(x=>x.delta!==null)?'Le stime sono stabili rispetto all’ultimo controllo.':'Il trend sarà disponibile dal prossimo aggiornamento della rosa.'}</span></li>`;
+    const riskDetails=riskVote.length?`<p class="fe-live-lead"><b style="color:#dff9ec">Giocatori a rischio voto</b> · sotto il 70% di probabilità stimata di prendere voto.</p><ul class="fe-live-events">${riskVote.map(x=>`<li><b>${safe(x.p.name)}</b><span>Voto stimato ${x.vote}% · titolarità ${x.prob}%</span></li>`).join('')}</ul>`:'';
     return `<section class="fe-live-card">
       <div class="fe-live-head"><div><span>Ultim’ora</span><h3>Controllo finale</h3></div><small>Aggiornato ${whenText(latestUpdate(players))}</small></div>
       <p class="fe-live-lead">Ti mostra solo ciò che può cambiare davvero la formazione prima della consegna.</p>
       <div class="fe-live-stats"><div><span>Variazioni ≥3</span><b>${changes.length}</b></div><div><span>Rischio voto</span><b>${riskVote.length}</b></div></div>
       <ul class="fe-live-events">${body}</ul>
+      ${riskDetails}
       <button type="button" class="fe-live-refresh" data-fe-refresh>Controlla adesso</button>
     </section>`;
   }

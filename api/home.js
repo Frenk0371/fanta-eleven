@@ -6,6 +6,7 @@ module.exports=(req,res)=>{
   try{
     const file=path.join(process.cwd(),'index.html');
     let html=fs.readFileSync(file,'utf8');
+    html=html.replace('Probabilità. Ballottaggi. Formazione.','Probabilità. Ballottaggi. Formazioni probabili.');
     html=html.replace(
       /<section class="hero"><h2>[\s\S]*?<button id="analyze" class="btn primary">[\s\S]*?<\/button><\/section>/,
       ''

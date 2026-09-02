@@ -6,7 +6,7 @@ module.exports=(req,res)=>{
   try{
     const file=path.join(process.cwd(),'index.html');
     let html=fs.readFileSync(file,'utf8');
-    html=html.replace('Probabilità. Ballottaggi. Formazione.','Probabilità. Ballottaggi. Formazioni probabili.');
+    html=html.replace('Probabilità. Ballottaggi. Formazione.','Probabilità. Ballottaggi. Formazioni probabili. Schede giocatori.');
     html=html.replace('</header>','</header><section id="feGlobalSearch" class="fe-global-search"><button type="button" class="fe-search-toggle" data-global-search-toggle aria-expanded="false" aria-controls="feGlobalSearchPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg><span>Cerca giocatore</span></button><div id="feGlobalSearchPanel" class="fe-search-panel" data-global-search-panel hidden><div class="fe-search-head"><input type="search" inputmode="search" autocomplete="off" placeholder="Nome del giocatore" aria-label="Cerca un giocatore di Serie A"><button type="button" class="fe-search-close" data-global-search-close aria-label="Chiudi ricerca">×</button></div><p class="fe-search-status" data-global-search-status>Scrivi almeno 2 lettere.</p><div class="fe-search-results" data-global-search-results></div></div></section>');
     html=html.replace(
       /<section class="hero"><h2>[\s\S]*?<button id="analyze" class="btn primary">[\s\S]*?<\/button><\/section>/,

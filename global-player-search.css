@@ -1,0 +1,18 @@
+.fe-global-search{margin:14px 0 12px;position:relative;z-index:8}
+.fe-search-toggle{width:100%;min-height:54px;border:1px solid rgba(143,240,198,.42);border-radius:18px;background:linear-gradient(145deg,rgba(18,48,65,.98),rgba(8,28,41,.98));color:var(--text);display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-size:16px;font-weight:850;box-shadow:0 11px 25px rgba(0,0,0,.16);cursor:pointer}
+.fe-search-toggle svg{width:21px;height:21px;stroke:var(--accent);stroke-width:2.4;fill:none}
+.fe-search-toggle[aria-expanded="true"]{border-color:var(--accent);background:linear-gradient(145deg,rgba(24,68,77,.98),rgba(9,36,50,.98))}
+.fe-search-panel{margin-top:10px;border:1px solid var(--line);border-radius:22px;padding:14px;background:linear-gradient(155deg,rgba(15,36,54,.99),rgba(5,20,32,.99));box-shadow:0 20px 50px rgba(0,0,0,.34)}
+.fe-search-head{display:flex;align-items:center;gap:9px}
+.fe-search-head input{min-width:0;flex:1;height:50px;border:1px solid var(--line);border-radius:15px;background:rgba(3,17,28,.82);color:var(--text);font:inherit;font-size:16px;padding:0 15px;outline:none}
+.fe-search-head input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(116,242,184,.1)}
+.fe-search-close{width:46px;height:46px;flex:0 0 46px;border:0;border-radius:14px;background:rgba(255,255,255,.07);color:var(--text);font-size:25px;line-height:1;cursor:pointer}
+.fe-search-status{margin:10px 3px 5px;color:var(--muted);font-size:13px}
+.fe-search-results{display:grid;gap:7px;margin-top:8px}
+.fe-search-result{width:100%;min-height:61px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(4,20,32,.72);color:var(--text);display:grid;grid-template-columns:42px 1fr 18px;align-items:center;gap:11px;padding:8px 11px;text-align:left;font:inherit;cursor:pointer}
+.fe-search-result:active{transform:scale(.988);background:rgba(21,55,68,.9)}
+.fe-search-avatar{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#1b5a53,#0b3131);border:1px solid rgba(154,255,211,.32);color:#dffff0;font-size:18px;font-weight:950}
+.fe-search-result b{display:block;font-size:15px;line-height:1.15}
+.fe-search-result small{display:block;margin-top:4px;color:var(--muted);font-size:12.5px;font-weight:700}
+.fe-search-chevron{color:var(--accent);font-size:27px;font-weight:500}
+@media(max-width:430px){.fe-global-search{margin-top:11px}.fe-search-toggle{min-height:51px;font-size:15px}.fe-search-panel{padding:11px;border-radius:19px}}

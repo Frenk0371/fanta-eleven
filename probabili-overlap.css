@@ -1,4 +1,5 @@
 body:has(#probabili:not(.hidden)) .tabs{position:relative!important;top:auto!important;z-index:6!important;margin-bottom:6px}
+.prob-row-0{transform:translateY(-38%)!important}
 .prob-lines-5 .prob-pitch{aspect-ratio:2/3}
 .prob-lines-5 .prob-count-1 .prob-face{width:74px;height:84px}
 .prob-lines-5 .prob-count-2 .prob-face{width:70px;height:80px}
